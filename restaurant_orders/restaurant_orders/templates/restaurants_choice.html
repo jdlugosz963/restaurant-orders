@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Wybierz restauracje{% endblock %}
+
+{% block content %}
+    {% if restaurants %}
+        <h3 class="text-4xl font-bold py-20">{{title}}</h3>
+        <h3 class="text-xl font-bold mb-2">Wybierz restauracje</h3>
+        <div id="restaurant-choices" class="grid grid-cols-8 max-h-0 text-center h-full bg-gray-50 text-gray-600 ">
+        {% for restaurant in restaurants %}
+            <div class="flex m-10">
+                <a href="{% url redirect_url restaurant.pk %}">
+                    <div class="bg-local block rounded-lg shadow-lg bg-gray-100">
+                        <img class="rounded-t-lg mb-4" src="{{restaurant.logo.url}}" alt="{{restaurant.name}}-logo"/>
+                        <h1 class="text-xl leading-tight pb-2 font-bold">{{restaurant.name}}</h5>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <h3 class="text-3xl font-bold mb-2 py-20">Nie posiadasz restauracji!</h3>
+    {% endif %}
+{% endblock %}

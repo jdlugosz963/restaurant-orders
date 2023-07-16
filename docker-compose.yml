@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+    restart: always
+    volumes:
+      - static_data:/vol/web
+    environment:
+      - TWILIO_TOKEN=${TWILIO_TOKEN}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMIAL_USER=${EMIAL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+
+      - REDIS_HOST=${REDIS_HOST}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - STATIC_DIR=/vol/web/static
+
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+    depends_on:
+      - redis
+      - db
+
+  celery_worker:
+    build: .
+    restart: always
+    command: "celery.sh"
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+    depends_on:
+      - redis
+      - db
+
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+
+  redis:
+    image: redis:6-alpine
+
+  proxy:
+    build:
+      context: ./proxy
+    restart: always
+    volumes:
+      - static_data:/vol/web
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+
+volumes:
+  static_data:
+  pg_data:

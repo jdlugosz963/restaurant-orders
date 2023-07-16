@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    {% include '_pagination.html' %}
+    <form method="get" id="" action="" class="font-bold">
+        <select name="status" class="bg-gray-50 rounded-lg p-2 pl-4 pr-4" onchange="this.form.submit()" id="id_status">
+
+	  <option value="" selected>Wszystkie</option>
+	  <option value="pending">Oczekujace</option>
+	  <option value="processing">Przetwarzane</option>
+	  <option value="on-hold">Wstrzymane</option>
+	  <option value="completed">Zakonczone</option>
+	  <option value="cancelled">Anulowane</option>
+	  <option value="refunded">Zwrocone</option>
+	  <option value="failed">Nie powiodlo sie</option>
+	  <option value="trash">Usuniete</option>
+	</select>
+    </form>
+
+    <script type="text/javascript">
+      const $select = document.querySelector('#id_status');
+     const paramsString = window.location.search;
+     const searchParams = new URLSearchParams(paramsString);
+     let status = searchParams.get('status');
+     if(status != null)
+         $select.value = searchParams.get('status');
+    </script>
+
+    <div id="orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 max-h-0 text-center h-full bg-gray-50 text-gray-600">
+        {% for object in object_list %}
+            <div id="order_{{object.pk}}" class='order'>
+                <a href="{% url 'dashboard:order_dashboard' object.pk %}">
+                    <div class="flex m-10">
+                        <div class="bg-local block rounded-lg shadow-lg p-10 max-w-sm bg-gray-50 hover:bg-gray-100 hover:shadow-lg focus:bg-gray-200 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-gray-200 active:shadow-lg transition duration-150 ease-in-out">
+                            <h1 class="text-2xl leading-tight w-max font-bold">#{{ object.wp_id}} - {{ object.billing.first_name }} {{ object.billing.last_name }}</h1>
+                            <h2 class="text-lg font-bold w-max mb-4">{{object.get_wp_status_display}}</h2>
+                            <ul class="list-decimal">
+                                {% for item in object.line_items %}
+                                    <li class="text-sm leading-tight font-bold pt-1 float-left">{{ item.name }} x{{item.quantity}}szt.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+    <h3 id="empty_orders_list_message" class="hidden text-3xl font-bold py-20 mb-8">Na poczatku byla ciemnosc...</h3>
+
+    <script type="text/javascript">
+     function setup_message_if_orders_empty() {
+         let orders = document.getElementById(`orders`)
+         let message = document.getElementById(`empty_orders_list_message`)
+
+         if (orders.getElementsByClassName('order').length == 0)
+             message.classList.remove('hidden')
+         else
+             message.classList.add('hidden')
+     }
+
+     function get_status_display(status) {
+	 console.log(status)
+         let status_map = {
+	     'pending': 'Oczekujace',
+	     'processing': 'Przetwarzane',
+	     'on-hold': 'Wstrzymane',
+	     'completed': 'Zakonczone',
+	     'cancelled': 'Anulowane',
+	     'refunded': 'Zwrocone',
+	     'failed': 'Nie powiodlo sie',
+	     'trash': 'Usuniete'
+         }
+         return status_map[status]
+     }
+     function get_url(id) {
+         return `/dashboard/restaurant/order/${id}/`
+     }
+
+     function get_line_items_html(line_items) {
+         let data = ''
+         for (i in line_items) {
+             let item = line_items[i];
+             data += `<li class="text-sm leading-tight font-bold pt-1 float-left">${item.name} x${item.quantity}szt.</li>`
+         }
+         return data
+     }
+
+     function add_order(data) {
+         let order = `
+        <div id="order_${data.pk}" class='order'>
+                <a href="${get_url(data.pk)}">
+                    <div class="flex m-10">
+                        <div class="bg-local block rounded-lg shadow-lg p-10 max-w-sm bg-gray-50 hover:bg-gray-100 hover:shadow-lg focus:bg-gray-200 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-gray-200 active:shadow-lg transition duration-150 ease-in-out">
+                            <h1 class="text-2xl leading-tight w-max font-bold">#${data.fields.wp_id} - ${data.fields.billing.first_name} ${data.fields.billing.last_name}</h1>
+                            <h2 class="text-lg font-bold w-max mb-4">${get_status_display(data.fields.wp_status)}</h2>
+                            <ul class="list-decimal">
+                                ${get_line_items_html(data.fields.line_items)}
+                            </ul>
+                        </div>
+                    </div>
+                </a>
+         </div>
+         `
+
+
+         let order_with_pk_from_data = document.getElementById(`order_${data.pk}`)
+
+         const paramsString = window.location.search;
+         const searchParams = new URLSearchParams(paramsString);
+         status = searchParams.get('status')
+         if(status != data.fields.status && status) {
+             let order_container = document.getElementById(`orders`)
+             order_container.removeChild(order_with_pk_from_data)
+             setup_message_if_orders_empty()
+             return // TODO: add notification in future
+         }
+         if  (order_with_pk_from_data)
+             order_with_pk_from_data.innerHTML = order
+         else {
+             let orders_container = document.getElementById('orders');
+             orders_container.innerHTML += order;
+         }
+         setup_message_if_orders_empty()
+         return order
+     }
+     const socket = new WebSocket(
+         'ws://'
+         + window.location.host
+         + '/ws/dashboard/orders/{{view.kwargs.restaurant_pk}}/'
+     );
+
+     socket.onopen = function(e) {
+         console.log("[open] Connection established");
+     };
+
+     socket.onmessage = function(event) {
+         console.log('onmessage')
+         let data=JSON.parse(event.data);
+         console.log(data)
+         console.log(add_order(data[0]));
+     };
+     socket.onclose = function(e) {
+         console.error('Chat socket closed unexpectedly');
+         const data = JSON.parse(e.data);
+         console.log(data)
+     };
+
+     setup_message_if_orders_empty();
+    </script>
+    {% endblock %}

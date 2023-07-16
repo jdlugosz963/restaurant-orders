@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{order.wp_id}}{% endblock %}
+
+{% block content %}
+    <div>
+        <a href="javascript:window.history.back();">Wroc</a>
+        <h1 class="text-2xl leading-tight mb-4 pt-20 font-bold"><a href="{{order.restaurant.wordpress_url}}/wp-admin/post.php?post={{ order.wp_id}}&action=edit" target="_blank">#{{ order.wp_id}} - {{ order.billing.first_name }} {{ order.billing.last_name }} - {{order.get_wp_status_display}}</a></h1>
+        <div class="grid grid-cols-1 lg:grid-cols-2 md:grid-cols-1 max-h-0 text-center h-full bg-gray-50 text-gray-600 ">
+            <div class="flex m-10">
+                <div class="bg-local block rounded-lg shadow-lg p-10 w-full bg-gray-50">
+                    <h1 class="text-2xl leading-tight mb-4 font-bold">Zamowienie</h1>
+
+                    <table class="table-auto w-full">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Produkt</th>
+                                <th>Cena za produkt</th>
+                                <th>Cena za produkty</th>
+                                <th>Ilosc</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.line_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{item.price}} zl</td>
+                                    <td>{{item.subtotal}} zl</td>
+                                    <td>{{item.quantity}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <ul class="list-decimal m-2">
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex m-10">
+                <div class="bg-local block rounded-lg shadow-lg p-10 w-full bg-gray-50">
+                    <h1 class="text-2xl leading-tight mb-4 font-bold">Adres dostawy</h1>
+                    <ul class="list-decimal m-2">
+                        <li class="m-2 w-full text-sm leading-tight font-bold float-left">
+                            <span class="float-left">Imie i Nazwisko</span>
+                            <span class="float-right">{{order.billing.first_name}} {{order.billing.last_name}}</span>
+                        </li>
+                        <li class="m-2 w-full text-sm leading-tight font-bold float-left">
+                            <span class="float-left">Numer stolika</span>
+                            <span class="float-right">{{order.billing.address_1}}</span>
+                        </li>
+                        <li class="m-2 w-full text-sm leading-tight font-bold float-left">
+                            <span class="float-left">Telefon</span>
+                            <span class="float-right">{{order.billing.phone}}</span>
+                        </li>
+                        <li class="m-2 w-full text-sm leading-tight font-bold float-left">
+                            <span class="float-left">Email</span>
+                            <span class="float-right">{{order.billing.email}}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex m-10">
+                <div class="bg-local block rounded-lg shadow-lg p-10 w-full bg-gray-50">
+                    <h1 class="text-2xl leading-tight mb-4 font-bold">Doliczenie do zamowienia</h1>
+                    <form method="POST" id="" action="{% url 'dashboard:order_add_to_bill' order.pk %}">
+                        {% csrf_token %}
+                        {{addToBillForm}}
+                        <input type="submit" value="Dolicz" class="mt-2 inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"/>
+                    </form>
+                </div>
+            </div>
+
+            <div class="flex m-10">
+                <div class="bg-local block rounded-lg shadow-lg p-10 w-full bg-gray-50">
+                    <h1 class="text-2xl leading-tight mb-4 font-bold">Akcje</h1>
+                    <form method="POST" id="" action="{% url 'dashboard:order_status_change' order.pk %}">
+                        {% csrf_token %}
+                        {{orderStatusForm}}
+                        <input type="submit" value="Zapisz" class="ml-2 inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

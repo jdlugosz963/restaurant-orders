@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="grid place-items-center">
+  <form method="post" class="p-6 rounded-lg shadow-lg bg-gray-50 justify-center max-w-sm">
+<h1 class="title">Login</h1>
+    {% csrf_token %}
+    <div class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none">
+    {{form.username.label_tag}}
+    {{form.username}}
+    </div>
+    <div class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none">
+    {{form.password.label_tag}}
+    {{form.password}}
+    </div>
+
+    <input type="submit" value="Login">
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+    <div class="py-20">
+        <h3 class="text-3xl font-bold mb-2">Settings</h3>
+
+            <div id='webhook_url' class='w-full mb-8'>
+                <span>Wpisz ten wehbhook do ustawien w twoim sklepie!</span>
+                <strong> {{request.scheme}}://{{request.get_host}}{% url 'wordpress_integration:webhook' restaurant_pk=view.kwargs.pk %}</strong>
+            </div>
+
+            <div class="grid place-items-center">
+                <form method="post" class="p-6 rounded-lg shadow-lg bg-gray-50 justify-center max-w-sm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{form.as_p}}
+                    <input type="submit" value="Zatwierdz!" />
+                </form>
+            </div>
+    </div>
+{% endblock %}
